@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifications</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, sans-serif;
+  }
+
+  .phone {
+    width: 335px;
+    height: 720px;
+    background: #111;
+    border-radius: 50px;
+    border: 1px solid #222;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  }
+
+  .notch {
+    width: 100px; height: 26px;
+    background: #000;
+    border-radius: 0 0 18px 18px;
+    margin: 0 auto;
+    z-index: 30; position: relative;
+  }
+
+  .screen {
+    height: calc(100% - 26px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── Content ── */
+  .inbox-content {
+    padding: 0 22px;
+    position: relative; z-index: 2;
+    transition: filter 0.5s ease, transform 0.5s ease;
+  }
+
+  .inbox-content.blurred {
+    filter: blur(4px) brightness(0.5);
+    transform: scale(0.96);
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 2px 8px;
+    color: #555;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .inbox-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0 18px;
+    border-bottom: 0.5px solid #1e1e1e;
+    margin-bottom: 2px;
+  }
+
+  .inbox-title {
+    font-size: 26px;
+    font-weight: 600;
+    color: #f0f0f0;
+    letter-spacing: -0.5px;
+  }
+
+  .trash-btn {
+    width: 34px; height: 34px;
+    border-radius: 50%; border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #444;
+    transition: color 0.25s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  .trash-btn.active {
+    color: #e05545;
+    transform: scale(1.1);
+  }
+
+  .trash-btn svg { width: 18px; height: 18px; }
+
+  /* ── Rows ── */
+  .notif-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 0.5px solid #191919;
+    gap: 14px;
+    cursor: pointer;
+    max-height: 90px; overflow: hidden;
+    transition: opacity 0.4s ease, max-height 0.45s ease, padding 0.4s ease;
+  }
+
+  .notif-row.deleted { opacity: 0; max-height: 0; padding: 0; }
+
+  .initials {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: #1e1e1e;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    color: #555;
+    letter-spacing: 0.03em;
+  }
+
+  .notif-text { flex: 1; min-width: 0; }
+
+  .notif-title {
+    font-size: 13px; font-weight: 500;
+    color: #ddd;
+    margin-bottom: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .notif-sub {
+    font-size: 11px; color: #444;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-weight: 400;
+  }
+
+  .notif-right {
+    display: flex; flex-direction: column;
+    align-items: flex-end; gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .notif-time { font-size: 10px; color: #333; font-weight: 400; }
+
+  .unread-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #e05545;
+  }
+
+  .checkbox {
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    border: 1px solid #2a2a2a;
+    background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.18s ease;
+  }
+
+  .checkbox.checked {
+    background: #e05545;
+    border-color: #e05545;
+  }
+
+  .checkbox.checked::after {
+    content: '';
+    width: 10px; height: 5px;
+    border-left: 1.5px solid #fff;
+    border-bottom: 1.5px solid #fff;
+    transform: rotate(-45deg) translateY(-1px);
+    display: block;
+  }
+
+  .home-bar {
+    position: absolute; bottom: 8px; left: 50%;
+    transform: translateX(-50%);
+    width: 90px; height: 4px;
+    background: #1e1e1e; border-radius: 2px; z-index: 30;
+  }
+
+  /* ════════════════════════════════
+     OVERLAY — transparent red rise
+  ════════════════════════════════ */
+
+  .overlay {
+    position: absolute; inset: 0;
+    z-index: 10; pointer-events: none;
+    overflow: hidden;
+  }
+
+  /* The rising liquid */
+  .liquid {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 0;
+    transition: height 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .overlay.open .liquid { height: 100%; }
+
+  /* Animated wave on the top edge */
+  .wave-svg {
+    position: absolute;
+    top: -34px; left: 0;
+    width: 100%; height: 36px;
+  }
+
+  .wave-path { fill: rgba(200, 50, 38, 0.35); }
+
+  /* Frosted red fill */
+  .liquid-fill {
+    position: absolute; inset: 0;
+    background: rgba(180, 38, 28, 0.32);
+    backdrop-filter: blur(22px) saturate(1.2);
+    -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  }
+
+  /* ── Popup ── */
+  .popup-body {
+    position: absolute; inset: 0; z-index: 2;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 0 32px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.4s ease 0.42s,
+                transform 0.5s cubic-bezier(0.34,1.3,0.64,1) 0.42s;
+  }
+
+  .overlay.open .popup-body {
+    opacity: 1; transform: translateY(0);
+    pointer-events: all;
+  }
+
+  .popup-count {
+    font-size: 20px; font-weight: 600;
+    color: #fff; margin-bottom: 8px;
+    letter-spacing: -0.3px;
+  }
+
+  .popup-message {
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.6; text-align: center;
+    max-width: 200px;
+    margin-bottom: 28px;
+    font-weight: 400;
+  }
+
+  .btn-delete {
+    width: 160px; padding: 13px 0;
+    background: #fff; color: #111;
+    font-size: 15px; font-weight: 600;
+    border: none; border-radius: 100px;
+    cursor: pointer; margin-bottom: 14px;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.2px;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.35s ease 0.6s,
+                transform 0.45s cubic-bezier(0.34,1.56,0.64,1) 0.6s;
+  }
+
+  .overlay.open .btn-delete { opacity: 1; transform: translateY(0); }
+  .btn-delete:active { opacity: 0.85; transform: scale(0.97) !important; }
+
+  .btn-cancel {
+    background: transparent; border: none;
+    color: rgba(255,255,255,0.45);
+    font-size: 13px; font-weight: 400;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    padding: 8px 20px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.3s ease 0.72s,
+                transform 0.3s ease 0.72s;
+  }
+
+  .overlay.open .btn-cancel { opacity: 1; transform: translateY(0); }
+  .btn-cancel:active { opacity: 0.3; }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="screen">
+
+    <div class="inbox-content" id="inboxContent">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span>100%</span>
+      </div>
+
+      <div class="inbox-header">
+        <span class="inbox-title">Notifications</span>
+        <button class="trash-btn" id="trashBtn" onclick="openPopup()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+               stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+            <path d="M9 6V4h6v2"/>
+          </svg>
+        </button>
+      </div>
+
+      <div id="notifList">
+
+        <div class="notif-row" id="row-0" onclick="toggleCheck(0)">
+          <div class="initials">ZK</div>
+          <div class="notif-text">
+            <div class="notif-title">Zara left you a comment</div>
+            <div class="notif-sub">Design review · Figma</div>
+          </div>
+          <div class="notif-right">
+            <span class="notif-time">2m</span>
+            <div class="checkbox" id="cb-0"></div>
+          </div>
+        </div>
+
+        <div class="notif-row" id="row-1" onclick="toggleCheck(1)">
+          <div class="initials">GH</div>
+          <div class="notif-text">
+            <div class="notif-title">Deploy #84 completed</div>
+            <div class="notif-sub">main → production</div>
+          </div>
+          <div class="notif-right">
+            <span class="notif-time">18m</span>
+            <div class="checkbox" id="cb-1"></div>
+          </div>
+        </div>
+
+        <div class="notif-row" id="row-2" onclick="toggleCheck(2)">
+          <div class="initials" style="color:#e05545;">!</div>
+          <div class="notif-text">
+            <div class="notif-title">Payment failed</div>
+            <div class="notif-sub">Card ending in 4242</div>
+          </div>
+          <div class="notif-right">
+            <div class="unread-dot"></div>
+            <div class="checkbox" id="cb-2"></div>
+          </div>
+        </div>
+
+        <div class="notif-row" id="row-3" onclick="toggleCheck(3)">
+          <div class="initials">MR</div>
+          <div class="notif-text">
+            <div class="notif-title">Marco joined the team</div>
+            <div class="notif-sub">Invited as Editor</div>
+          </div>
+          <div class="notif-right">
+            <span class="notif-time">1h</span>
+            <div class="checkbox" id="cb-3"></div>
+          </div>
+        </div>
+
+        <div class="notif-row" id="row-4" onclick="toggleCheck(4)">
+          <div class="initials">SY</div>
+          <div class="notif-text">
+            <div class="notif-title">Storage at 92%</div>
+            <div class="notif-sub">Free up space soon</div>
+          </div>
+          <div class="notif-right">
+            <span class="notif-time">3h</span>
+            <div class="checkbox" id="cb-4"></div>
+          </div>
+        </div>
+
+        <div class="notif-row" id="row-5" onclick="toggleCheck(5)">
+          <div class="initials">AP</div>
+          <div class="notif-text">
+            <div class="notif-title">New login from Tokyo</div>
+            <div class="notif-sub">Safari · iPhone · verify?</div>
+          </div>
+          <div class="notif-right">
+            <div class="unread-dot"></div>
+            <div class="checkbox" id="cb-5"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay">
+      <div class="liquid" id="liquid">
+        <svg class="wave-svg" viewBox="0 0 335 36" preserveAspectRatio="none">
+          <path class="wave-path">
+            <animate attributeName="d"
+              values="
+                M0,18 C55,2 110,34 168,16 C226,0 280,34 335,18 L335,36 L0,36 Z;
+                M0,16 C55,34 110,0 168,20 C226,36 280,2 335,16 L335,36 L0,36 Z;
+                M0,18 C55,2 110,34 168,16 C226,0 280,34 335,18 L335,36 L0,36 Z
+              "
+              dur="3s" repeatCount="indefinite"/>
+          </path>
+        </svg>
+        <div class="liquid-fill"></div>
+      </div>
+
+      <div class="popup-body">
+        <div class="popup-count" id="popupCount">2 items</div>
+        <div class="popup-message">Delete these notifications? You won't be able to get them back.</div>
+        <button class="btn-delete" onclick="confirmDelete()">Delete</button>
+        <button class="btn-cancel" onclick="cancelDelete()">Cancel</button>
+      </div>
+    </div>
+
+    <div class="home-bar"></div>
+  </div>
+</div>
+
+<script>
+  const checked = new Set();
+
+  function toggleCheck(i) {
+    const cb = document.getElementById('cb-' + i);
+    checked.has(i) ? checked.delete(i) : checked.add(i);
+    cb.classList.toggle('checked', checked.has(i));
+    document.getElementById('trashBtn').classList.toggle('active', checked.size > 0);
+  }
+
+  function openPopup() {
+    if (!checked.size) return;
+    const n = checked.size;
+    document.getElementById('popupCount').textContent = n + (n === 1 ? ' notification' : ' notifications');
+    document.getElementById('inboxContent').classList.add('blurred');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      document.getElementById('overlay').classList.add('open');
+    }));
+  }
+
+  function cancelDelete() {
+    document.getElementById('overlay').classList.remove('open');
+    document.getElementById('inboxContent').classList.remove('blurred');
+  }
+
+  function confirmDelete() {
+    checked.forEach(i => document.getElementById('row-' + i)?.classList.add('deleted'));
+    setTimeout(() => {
+      checked.forEach(i => document.getElementById('row-' + i)?.remove());
+      checked.clear();
+      document.getElementById('trashBtn').classList.remove('active');
+      cancelDelete();
+    }, 460);
+  }
+</script>
+
+</body>
+</html>

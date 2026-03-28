@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Nunito:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #f7f6f3;
+    min-height: 100vh;
+    padding: 36px 24px;
+    color: #111;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 24px;
+    color: #111;
+  }
+
+  .toggle-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 20px;
+    border-radius: 100px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 500;
+    background: #e8e6e1;
+    color: #888;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+  }
+  .toggle-btn:hover { transform: scale(1.03); }
+  .toggle-btn.active {
+    background: #2ec4f0;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(46,196,240,0.25);
+  }
+  .toggle-btn svg { width: 18px; height: 18px; }
+
+  .divider { border: none; border-top: 1.5px solid #e0ddd6; margin-bottom: 28px; }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .nft-card {
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .nft-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.13);
+  }
+
+  .card-img {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .card-img svg { width: 100%; height: 100%; }
+  .card-img.bg-lavender { background: #d9d4f0; }
+  .card-img.bg-sky { background: #cce8f4; }
+
+  .card-info { padding: 14px 16px 16px; }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-price { font-size: 0.93rem; font-weight: 600; color: #111; }
+  .card-price span { color: #aaa; font-weight: 400; }
+  .card-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #aaa;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #f0c040; }
+
+  .list-view { display: flex; flex-direction: column; gap: 14px; }
+  .list-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .list-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.11);
+  }
+  .list-thumb {
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .list-thumb svg { width: 72px; height: 72px; }
+  .list-info { flex: 1; }
+  .list-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  .list-price { font-size: 0.88rem; font-weight: 600; color: #333; }
+  .list-price span { color: #bbb; font-weight: 400; }
+  .list-badge { display: flex; align-items: center; gap: 5px; color: #aaa; font-size: 0.85rem; font-weight: 600; }
+
+  .pack-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 0 32px;
+  }
+  .pack-blob {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin-bottom: 24px;
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
+  .pack-blob:hover { transform: scale(1.05) rotate(-2deg); }
+  .pack-blob svg.blob-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .pack-stack {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pack-stack .item1 {
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    border-radius: 14px;
+    overflow: hidden;
+    transform: rotate(-12deg) translate(-18px, 14px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1;
+    background: #d9d4f0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pack-stack .item2 {
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    border-radius: 14px;
+    overflow: hidden;
+    transform: rotate(8deg) translate(14px, -10px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 2;
+    background: #cce8f4;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pack-stack svg { width: 80px; height: 80px; }
+
+  .pack-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .pack-eth { font-size: 1rem; color: #aaa; text-align: center; }
+  .pack-eth strong { color: #333; font-weight: 600; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<h1>Collectibles</h1>
+
+<div class="toggle-group">
+  <button class="toggle-btn" id="btn-list" onclick="setView('list')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    List view
+  </button>
+  <button class="toggle-btn active" id="btn-card" onclick="setView('card')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Card view
+  </button>
+  <button class="toggle-btn" id="btn-pack" onclick="setView('pack')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>
+    Pack view
+  </button>
+</div>
+
+<hr class="divider" />
+
+<!-- CARD VIEW -->
+<div id="view-card" class="card-grid">
+
+  <div class="nft-card">
+    <div class="card-img bg-lavender">
+     <img src=img1.png style="width:100%;height:100%;object-fit:cover;" />
+    </div>
+    <div class="card-info">
+      <div class="card-title">Skilled Fingers Series</div>
+      <div class="card-meta">
+        <div class="card-price">0.855 <span>ETH</span></div>
+        <div class="card-badge"><span class="dot"></span>#209</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nft-card">
+    <div class="card-img bg-sky">
+      <img src=img2.png style="width:100%;height:100%;object-fit:cover;" />
+    </div>
+    <div class="card-info">
+      <div class="card-title">Vibrant Vibes Series</div>
+      <div class="card-meta">
+        <div class="card-price">0.209 <span>ETH</span></div>
+        <div class="card-badge"><span class="dot"></span>#808</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- LIST VIEW -->
+<div id="view-list" class="list-view hidden">
+
+  <div class="list-item">
+    <div class="list-thumb" style="background:#d9d4f0;">
+      <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="28" cy="48" rx="20" ry="28" fill="#e8531a"/>
+        <ellipse cx="46" cy="46" rx="19" ry="26" fill="#e8531a"/>
+        <ellipse cx="18" cy="32" rx="8" ry="16" fill="#e8531a" transform="rotate(-10 18 32)"/>
+        <ellipse cx="28" cy="26" rx="7" ry="16" fill="#e8531a"/>
+        <ellipse cx="38" cy="27" rx="7" ry="15" fill="#e8531a" transform="rotate(8 38 27)"/>
+        <ellipse cx="18" cy="18" rx="5" ry="7" fill="white" transform="rotate(-10 18 18)"/>
+        <ellipse cx="28" cy="14" rx="5" ry="6" fill="white"/>
+        <path d="M32 23 Q38 14 44 20" stroke="#f0c040" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="list-info">
+      <div class="list-title">Skilled Fingers Series</div>
+      <div class="list-price">0.855 <span>ETH</span></div>
+    </div>
+    <div class="list-badge"><span class="dot"></span>#209</div>
+  </div>
+
+  <div class="list-item">
+    <div class="list-thumb" style="background:#cce8f4;">
+      <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(36,40) rotate(-15)">
+          <rect x="-22" y="-15" width="44" height="30" rx="4" fill="#e83a8c"/>
+          <rect x="-22" y="-15" width="44" height="14" rx="4" fill="#ffe01a"/>
+          <rect x="-22" y="-3" width="44" height="2" fill="#ffe01a"/>
+          <rect x="-15" y="-1" width="30" height="14" rx="6" fill="#f5e8c8"/>
+          <circle cx="-7" cy="8" r="6" fill="#6b1a6b"/>
+          <circle cx="7" cy="8" r="6" fill="#6b1a6b"/>
+          <circle cx="-7" cy="8" r="2.5" fill="#c890c8"/>
+          <circle cx="7" cy="8" r="2.5" fill="#c890c8"/>
+          <path d="M0 -15 Q6 -25 16 -20" stroke="#e84040" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+    <div class="list-info">
+      <div class="list-title">Vibrant Vibes Series</div>
+      <div class="list-price">0.209 <span>ETH</span></div>
+    </div>
+    <div class="list-badge"><span class="dot"></span>#808</div>
+  </div>
+
+</div>
+
+<!-- PACK VIEW -->
+<div id="view-pack" class="pack-view hidden">
+
+  <div class="pack-blob">
+    <svg class="blob-bg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M48,-62C60,-52,67,-36,72,-19C77,-2,79,16,72,30C65,44,48,55,31,62C13,69,-5,71,-24,66C-43,61,-63,49,-72,32C-81,15,-79,-7,-70,-25C-62,-43,-47,-56,-31,-65C-14,-73,4,-77,21,-71C37,-65,36,-72,48,-62Z" transform="translate(100 100)" fill="#d8edf7"/>
+      <path d="M37,-52C47,-40,53,-26,58,-10C63,5,66,22,59,35C52,49,35,59,16,65C-3,71,-24,72,-38,63C-52,53,-59,33,-62,14C-65,-5,-64,-23,-55,-37C-47,-51,-32,-60,-16,-65C0,-70,17,-70,30,-61C44,-52,27,-63,37,-52Z" transform="translate(100 100)" fill="#cce8f4" opacity="0.7"/>
+    </svg>
+    <div class="pack-stack">
+      <div class="item1">
+        <svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="35" cy="60" rx="25" ry="35" fill="#e8531a"/>
+          <ellipse cx="58" cy="57" rx="24" ry="33" fill="#e8531a"/>
+          <ellipse cx="23" cy="40" rx="10" ry="20" fill="#e8531a" transform="rotate(-10 23 40)"/>
+          <ellipse cx="35" cy="33" rx="9" ry="20" fill="#e8531a"/>
+          <ellipse cx="47" cy="34" rx="9" ry="18" fill="#e8531a" transform="rotate(8 47 34)"/>
+          <ellipse cx="23" cy="23" rx="6" ry="9" fill="white" transform="rotate(-10 23 23)"/>
+          <ellipse cx="35" cy="18" rx="6" ry="8" fill="white"/>
+          <path d="M40 29 Q48 18 56 25" stroke="#f0c040" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="item2">
+        <svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(45,50) rotate(-15)">
+            <rect x="-27" y="-18" width="54" height="36" rx="5" fill="#e83a8c"/>
+            <rect x="-27" y="-18" width="54" height="17" rx="5" fill="#ffe01a"/>
+            <rect x="-27" y="-3" width="54" height="2" fill="#ffe01a"/>
+            <rect x="-19" y="-1" width="38" height="17" rx="7" fill="#f5e8c8"/>
+            <circle cx="-9" cy="9" r="7" fill="#6b1a6b"/>
+            <circle cx="9" cy="9" r="7" fill="#6b1a6b"/>
+            <circle cx="-9" cy="9" r="3" fill="#c890c8"/>
+            <circle cx="9" cy="9" r="3" fill="#c890c8"/>
+            <path d="M0 -18 Q8 -32 20 -25" stroke="#e84040" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="pack-label">2 Collectibles</div>
+  <div class="pack-eth"><strong>1.064</strong> ETH</div>
+</div>
+
+<script>
+  let currentView = 'card';
+  let animating = false;
+
+  function setView(toView) {
+    if (toView === currentView || animating) return;
+    animating = true;
+
+    const fromEl = document.getElementById('view-' + currentView);
+    const toEl   = document.getElementById('view-' + toView);
+
+    ['card','list','pack'].forEach(v => {
+      document.getElementById('btn-' + v).classList.toggle('active', v === toView);
+    });
+
+    fromEl.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
+    fromEl.style.opacity    = '0';
+    fromEl.style.transform  = 'translateY(8px)';
+
+    setTimeout(() => {
+      fromEl.classList.add('hidden');
+      fromEl.style.transition = '';
+      fromEl.style.opacity    = '';
+      fromEl.style.transform  = '';
+
+      toEl.style.transition = 'none';
+      toEl.style.opacity    = '0';
+      toEl.style.transform  = 'translateY(-8px)';
+      toEl.classList.remove('hidden');
+
+      void toEl.offsetWidth;
+
+      toEl.style.transition = 'opacity 0.28s ease, transform 0.28s ease';
+      toEl.style.opacity    = '1';
+      toEl.style.transform  = 'translateY(0)';
+
+      currentView = toView;
+
+      setTimeout(() => {
+        toEl.style.transition = '';
+        toEl.style.opacity    = '';
+        toEl.style.transform  = '';
+        animating = false;
+      }, 300);
+
+    }, 240);
+  }
+</script>
+</body>
+</html>
